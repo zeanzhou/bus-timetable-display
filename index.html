@@ -1,0 +1,115 @@
+<html lang="zh-cn">
+<head>
+<meta charset="utf-8">
+  
+<meta name="viewport"   
+	content="   
+		width = device-width ,
+		initial-scale = 1.0 ,
+		maximum-scale = 1.0 ,
+		user-scalable = no"
+/>
+<link rel="stylesheet" type="text/css" href="./bus_schedule/bus.css">
+<link rel="stylesheet" type="text/css" href="bootstrap.min.css">
+<script type="text/javascript" src="jquery-3.1.1.min.js"></script>
+<script type="text/javascript" src="bootstrap.min.js"></script>
+<script type="text/javascript" src="./bus_schedule/bus.js"></script>
+
+
+<title>Dynamic Bus Schedule</title>
+</head>
+<body>
+<div class="Infoboard " id="bus1057_a">
+	<div class="Top-container">
+		<div class="Left-top-indicator" formatter="{abbr}"></div>
+		<div class="Right-top-indicator" formatter="[{title}表]"></div>
+		<div class="Center-indicator" formatter="{_countdown[auto]}"></div>
+		<div class="Bottom-indicator" formatter="=>{destination}"></div>
+	</div>
+	<div class="Bottom-container">
+	</div>
+</div>
+
+<div class="Infoboard" id="bus1057_b">
+	<div class="Top-container">
+		<div class="Left-top-indicator" formatter="{abbr}"></div>
+		<div class="Right-top-indicator" formatter="[{title}表]"></div>
+		<div class="Center-indicator" formatter="{_countdown[auto]}"></div>
+		<div class="Bottom-indicator" formatter="=>{destination}"></div>
+	</div>
+	<div class="Bottom-container">
+	</div>
+</div>
+
+<div class="Infoboard" id="campusbus_a">
+	<div class="Top-container">
+		<div class="Left-top-indicator" formatter="{abbr}"></div>
+		<div class="Right-top-indicator" formatter="[{title}表]"></div>
+		<div class="Center-indicator" formatter="{_countdown[auto]}"></div>
+		<div class="Bottom-indicator" formatter="=>{destination}"></div>
+	</div>
+	<div class="Bottom-container">
+	</div>
+</div>
+
+<div class="Infoboard" id="campusbus_b">
+	<div class="Top-container">
+		<div class="Left-top-indicator" formatter="{abbr}"></div>
+		<div class="Right-top-indicator" formatter="[{title}表]"></div>
+		<div class="Center-indicator" formatter="{_countdown[auto]}"></div>
+		<div class="Bottom-indicator" formatter="=>{destination}"></div>
+	</div>
+	<div class="Bottom-container">
+	</div>
+</div>
+
+
+<center>↑点击方框查看更多↑</center>
+</body>
+<footer>
+	<script type="text/javascript">
+			var lastClick;
+			var showall = true;
+			$('div.Infoboard').click(function() {
+				if (GLOBALVARS['all_ifbds'].length < 4) 
+					return;
+				lastClick = $(this);
+				var newheight = window.innerHeight-lastClick.children('div.Top-container').outerHeight()-lastClick.find('ul.nav').outerHeight()-18;
+				lastClick.find('div.Entries-container').css('height', newheight);
+				// lastClick.parent().animate({scrollTop:$('#'+lastClick.attr('id')).offset().top-9});
+					var container = $(this).find('div[class="tab-pane active"]').children('div.Entries-container');
+					var scrollTo = container.children('div.highlight');
+					if (scrollTo.length>0)
+						container.animate({
+							scrollTop: scrollTo.offset().top - container.offset().top + container.scrollTop() - newheight/2 + 22.5
+						});
+			});
+			$('div.Top-container').click(function () {
+				$(this).next().fadeToggle();
+				showall = !showall;
+				if (showall) 
+					$('div.Infoboard').fadeIn();
+				else{
+					$(this).parent().show();
+					$('div.Infoboard').not($(this).parent()).hide();
+				}
+			});
+			$(document).ready(function(){
+				initialize("campusbus_a", "./bus_schedule/route_1a.json", true);
+				initialize("campusbus_b", "./bus_schedule/route_1b.json", true);
+				initialize("bus1057_a", "./bus_schedule/1057_a.json", true);
+				initialize("bus1057_b", "./bus_schedule/1057_b.json", true);
+			});
+			function initialize(id, url, pattern){
+				$.ajax({
+					url: url,
+					success: function(json) {
+						Infoboard.init($('div.Infoboard#' + id), JSON.parse(json), pattern); // must be standard JSON, without function
+					},
+					dataType: "text",
+					cache: false
+				});
+			}
+	</script>
+</footer>
+</html>

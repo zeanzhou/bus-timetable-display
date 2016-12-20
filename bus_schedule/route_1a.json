@@ -1,0 +1,90 @@
+{
+	"version": 1.0,
+	"name": "张江校区短驳班车",
+	"abbr": "校内班车",
+	"departure": "张江高科站",
+	"destination": "学校",
+	"route": ["张江高科地铁站2号口", "海科路科苑路","海科路99号","环科路199号"],
+	"lastupdate": "2016-12-10 01:38:45",
+	"timetable": [
+		{
+			"title": "工作日",
+			"filter": "weekday",
+			"priority": 0,
+			"estimate-delay": 20, 
+			"text": ["于该时刻从环科路发车，随到即开，预计20分钟"],
+			"schedule": [
+				"7:30",
+				"7:40",
+				"8:30",
+				"9:45",
+				"10:45",
+				"11:25",
+				"12:45",
+				"13:45",
+				"14:45",
+				"15:45",
+				{
+					"time": "16:25",
+					"property": "estimate",
+					"text": 0
+				},
+				{
+					"time": "17:15",
+					"property": "estimate",
+					"text": 0
+				},
+				{
+					"time": "17:45",
+					"property": "estimate",
+					"text": 0
+				},
+				{
+					"time": "18:45",
+					"property": "estimate",
+					"text": 0
+				},
+				{
+					"time": "19:45",
+					"property": "estimate",
+					"text": 0
+				}
+			]
+		},
+		{
+			"title": "周六",
+			"filter": "holiday",
+			"priority": 0,
+			"schedule": [
+				"8:30",
+				"9:30",
+				"11:15"
+			]
+		},
+		{
+			"title": "周日",
+			"filter": "Sun",
+			"priority": 1,
+			"schedule": [
+				"8:30",
+				"9:30",
+				"11:15",
+				{
+					"time": "19:30",
+					"property": "accurate",
+					"text": "金科路地铁站（祖冲之路公交站台）发车"
+				},
+				{
+					"time": "20:30",
+					"property": "accurate",
+					"text": "金科路地铁站（祖冲之路公交站台）发车"
+				},
+				{
+					"time": "21:30",
+					"property": "accurate",
+					"text": "金科路地铁站（祖冲之路公交站台）发车"
+				}
+			]
+		}
+	]
+}

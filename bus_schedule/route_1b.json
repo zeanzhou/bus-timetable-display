@@ -1,0 +1,58 @@
+{
+	"version": 1.0,
+	"name": "张江校区短驳班车",
+	"abbr": "校内班车",
+	"departure": "学校",
+	"destination": "张江高科站",
+	"route": ["环科路199号", "海科路99号","海科路科苑路","张江高科地铁站2号口"],
+	"lastupdate": "2016-12-10 18:26:59",
+	"timetable": [
+		{
+			"title": "工作日",
+			"filter": "weekday",
+			"priority": 0,
+			"estimate-delay": 20, 
+			"text": ["于该时刻从地铁站发车，随到即开，预计20分钟"],
+			"schedule": [
+				{
+					"time": "7:30",
+					"property": "estimate",
+					"text": 0
+				},
+				{
+					"time": "7:40",
+					"property": "estimate",
+					"text": 0
+				},
+				{
+					"time": "8:30",
+					"property": "estimate",
+					"text": 0
+				},
+				"9:25",
+				"10:25",
+				"11:05",
+				"12:25",
+				"13:25",
+				"14:25",
+				"15:25",
+				"16:25",
+				"17:15",
+				"17:45",
+				"18:45",
+				"19:40"
+			]
+		},
+		{
+			"title": "节假日",
+			"filter": "holiday",
+			"priority": 0,
+			"schedule": [
+				"9:15",
+				"11:00",
+				"17:00",
+				"17:30"
+			]
+		}
+	]
+}
