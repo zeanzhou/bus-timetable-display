@@ -258,14 +258,16 @@ function _datefilter(filter) {		   // converter every possible input into a filt
 	var is_work_day = function (date_str) { // 0 - workday, 1 - weekend, 2 - holiday
 		var holidays_2017 = new Array("2017/1/1","2017/1/2","2017/1/27","2017/1/28","2017/1/29","2017/1/30","2017/1/31","2017/2/1","2017/2/2","2017/4/2","2017/4/3","2017/4/4","2017/4/29","2017/4/30","2017/5/1","2017/5/28","2017/5/29","2017/5/30","2017/10/1","2017/10/2","2017/10/3","2017/10/4","2017/10/5","2017/10/6","2017/10/7","2017/10/8");
 		var ex_workdays_2017 = new Array("2017/1/22","2017/2/4","2017/4/1","2017/5/27","2017/9/30");
+		if (date_str == undefined){
+			this_date = new Date();
+			date_str = this_date.toLocaleDateString();
+		}
+		else
+			this_date = new Date(date_str)
 		if (holidays_2017.indexOf(date_str) != -1)
 			return 2;
 		if (ex_workdays_2017.indexOf(date_str) != -1)
 			return 0;
-		if (date_str == undefined) 
-			this_date = new Date();
-		else
-			this_date = new Date(date_str)
 		if (this_date.getDay() == 6 || this_date.getDay() == 0)
 			return 1;
 		else
