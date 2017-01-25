@@ -286,7 +286,7 @@ function _datefilter(filter) {		   // converter every possible input into a filt
 		if (day.indexOf(date) != -1)
 			d = day[d.getDay()];
 		else
-			d = d.getFullYear()+'/'+d.getMonth()+'/'+d.getDate();
+			d = d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate();
 		return date == d;
 	};
 	var _mixedfilter = function (list) { // filter = ["2016/12/7", "weekday", ...]
