@@ -3,7 +3,7 @@
 // })();
 var GLOBALVARS = {
 	"plugin_name": "bus.js",
-	"version": 1.2,
+	"version": 1.3,
 	"finish": false,
 	"all_ifbds": [],
 }
@@ -101,8 +101,8 @@ var Infoboard = {
 			$.extend(timetable, me.data.timetable);	// array copy
 			for (var i = timetable.length - 1; i >= 0; i--)
 				timetable[i]['_id'] = i;
-			timetable.sort(function (a, b) {return a.priority - b.priority;}); // sort by priority, stable?
-			for (var i = timetable.length - 1; i >= 0; i--) {
+			timetable.sort(function (a, b) {return b.priority - a.priority;}); // sort by priority, stable, the higher the prior
+			for (var i = 0; i <= timetable.length - 1; i++) {
 				var f = timetable[i].filter[0];
 				if (f(timetable[i].filter[1]))
 					return timetable[i]._id; // return the original index
