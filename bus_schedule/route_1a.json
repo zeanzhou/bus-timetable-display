@@ -1,12 +1,12 @@
 {
 	"version": 1.0,
 	"name": "张江校区短驳班车",
-	"abbr": "校内班车",
+	"abbr": "学校班车 (周末增开班次点开看详情)",
 	"departure": "张江高科站",
 	"destination": "学校",
 	"notice": "[2017/2/9~2017/2/10停靠站为金科路站]",
 	"route": ["张江高科地铁站2号口", "海科路科苑路","海科路99号","环科路199号"],
-	"lastupdate": "2016-12-10 01:38:45",
+	"lastupdate": "2017年3月25日 21:16:38",
 	"timetable": [
 		{
 			"title": "寒假",
@@ -68,18 +68,8 @@
 			]
 		},
 		{
-			"title": "周六",
+			"title": "节假日",
 			"filter": "holiday",
-			"priority": 0,
-			"schedule": [
-				"8:30",
-				"9:30",
-				"11:15"
-			]
-		},
-		{
-			"title": "周日",
-			"filter": "Sun",
 			"priority": 1,
 			"schedule": [
 				"8:30",
