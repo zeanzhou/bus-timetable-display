@@ -119,6 +119,16 @@ var Infoboard = {
 			return undefined;
 		}
 
+		$.ajax({
+			url: './language.json',
+			success: function(json) {
+				me.dic = JSON.parse(json);
+			}, //TODO: if failed
+			dataType: "text",
+			cache: true
+		});
+		me.language = 'zh-cn'; // default language of bus.js
+
 		me.data = preprocess(me.data); // convert abbr JSON to standard JSON
 		me.tableindex = _tableselector(); // timetable index for today
 		me.instant_buffer = []; // buffer of indicators
@@ -232,6 +242,118 @@ var Infoboard = {
 	}
 }
 
+function translate(json, dst_lang) {
+	if (!json.hasOwnProperty('language')) {
+		return;
+	}
+	var src_lang = json.language.default.toLowerCase();
+	dst_lang = dst_lang?dst_lang.toLowerCase():'auto';
+
+	var avail_lang_list = new Array();
+	for (var i = 0; i < json.language.list.length; i++) {
+		avail_lang_list.push(json.language.list[i].name.toLowerCase());
+	}
+	var nav_lang_list = navigator.languages;
+
+// Choose Language
+	var final_dst_lang_index = -1;
+	if (dst_lang != 'auto') { // a target language is set
+		for (var i = 0; i < avail_lang_list.length; i++) { // full-text match
+			if (avail_lang_list[i] == dst_lang) // zh-CN ---> zh-CN
+				final_dst_lang_index = i;
+			else
+				continue;
+			break;
+		}
+		if (final_dst_lang_index == -1) {
+			for (var i = 0; i < avail_lang_list.length; i++) { // language-based match
+				if (avail_lang_list[i].indexOf(dst_lang) != -1) // en-US ---> en
+					final_dst_lang_index = i;
+				else if (avail_lang_list[i].slice(0, 2) == dst_lang.slice(0, 2)) // zh-CN ---> zh-HK
+					final_dst_lang_index = i;
+				else
+					continue;
+				break;
+			}
+		}
+	} else { // no target language is set, read navigater.languages and manually match them
+		for (var i = 0; i < nav_lang_list.length; i++) { // full-text match
+			final_dst_lang_index = avail_lang_list.indexOf(nav_lang_list[i]);
+			if (final_dst_lang_index != -1)
+				break;
+		}
+		if (final_dst_lang_index == -1) { // language-based match
+			for (var i = 0; i < nav_lang_list.length; i++) {
+				for (var j = avail_lang_list.length - 1; j >= 0; j--) {
+					if (avail_lang_list[j].slice(0, 2) == nav_lang_list[i].slice(0, 2)) {
+						final_dst_lang_index = j;
+						break;
+					}
+				}
+				if (final_dst_lang_index != -1)
+					break;
+			}
+		}
+	}
+	if (final_dst_lang_index == -1) { // still no match, use navigator.browserLanguage or navigator.language
+		dst_lang = navigator.browserLanguage?navigator.browserLanguage:navigator.language;
+		final_dst_lang_index = avail_lang_list.indexOf(nav_lang_list[i])
+	}
+	if (final_dst_lang_index == -1) // unable to detect a target language, use default language
+		return json;
+	dst_lang = json.language.list[final_dst_lang_index].name.toLowerCase();
+
+	if (src_lang == dst_lang) // don't need translation
+		return json;
+
+// Fetch Language
+	var dictionary;
+	$.ajax({
+		url: json.language.list[final_dst_lang_index].url,
+		success: function(json) {
+			dictionary = JSON.parse(json);
+		}, //TODO: if failed
+		dataType: "text",
+		cache: true
+	});
+
+// Map Language File of bus.js
+	if (dst_lang != me.language) { // check if a full-text match exists
+		for (var key in me.dic) {
+			if (key.toLowerCase() == dst_lang) {
+				me.language = key;
+				break;
+			}
+		}
+	}
+	if (dst_lang != me.language) { // check if a language-based match exists   [lang]-[area] ---> zh-CN
+		for (var key in me.dic) {
+			if (key.slice(0, 2).toLowerCase() == dst_lang.slice(0, 2)) {
+				me.language = key;
+				break;
+			}
+		}
+	}
+
+// Translation
+	var inner_translate = function (json) {
+			for (var prop in json) {
+				if (prop == 'filter')
+					continue;
+				if (prop == 'property')
+					continue;
+				if (typeof json[prop] == 'string')
+					json[prop] = dictionary[json[prop]]?dictionary[json[prop]]:json[prop];
+				else if (typeof json[prop] == 'object')
+					for (var element in json[prop])
+						inner_translate(json[prop]);
+				else // number, boolean, undefined, function
+					continue;
+		};
+	inner_translate(json);
+	return json;
+}
+
 function preprocess(json) {
 	for (var t = json.timetable.length - 1; t >= 0; t--) { // use 'in' ?
 		for (var s = json.timetable[t].schedule.length - 1; s >= 0; s--) {
@@ -250,7 +372,7 @@ function preprocess(json) {
 			}
 		}
 		json.timetable[t].filter = _datefilter(json.timetable[t].filter); // convert abbr to a pre-defined function
-	}
+	}	
 	return json;
 }
 
