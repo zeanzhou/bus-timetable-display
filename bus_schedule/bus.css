@@ -31,7 +31,7 @@ div.Infoboard{
     border: 1px solid rgba(0,0,0,.15);
     border-radius: 7px;
     box-shadow: 0 6px 12px rgba(0,0,0,.175);
-    font-family: Helvetica, Arial, "Microsoft YaHei", sans-serif;
+    font-family: 'Roboto', Helvetica, Arial, "Microsoft YaHei", sans-serif;
 }
 div.Top-container{
 	position: relative;
@@ -91,28 +91,36 @@ div.Entries-container{
 div.Entry{
 	position: relative;
 	margin-top: 5px;
-	height: 45px;
+	/*height: 45px;*/
 	width: 100%;
 	vertical-align: middle;
 	text-shadow: 2px 2px 1px #eee;
 	font-size: 14px;
+	/*min-height: 40px;*/
+	padding-bottom: 7.5px;
+	padding-top: 7.5px;
 }
 
 div.Entry-center{
-	position: absolute;
+/*	position: absolute;
 	top: 50%;
 	left: 50%;
-	transform: translate(-50%, -50%);
+	transform: translate(-50%, -50%);*/
 	width: 100%;
+	display: inline-block;
 }
 
 div.Entry-time{
 	text-align: center;
 	font-size: 1.2em;
+	width: 100%;
+	display: inline-block;
 }
 div.Entry-text{
 	text-align: center;
-	font-size: .75em;
+	font-size: .77em;
+	width: 100%;
+	display: inline-block;
 }
 div.highlight{
 	font-size: 18px;
