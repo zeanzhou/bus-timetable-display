@@ -8,8 +8,34 @@ var GLOBALVARS = {
 	"all_ifbds": [],
 }
 
+class Dictionary {
+	constructor(raw_data, default_lang) {
+		this._data = raw_data;
+		this._defaultlang = default_lang;
+	}
+
+	fetch(lang) {
+		if (this._data[lang] == undefined) {
+			lang = this._defaultlang;
+		}
+		return this._data[lang];
+	}
+
+	get data() {
+		return this._data;
+	}
+
+	set data(d) {
+		var original = this._data;
+		this._data = d;
+		if (this._data[this._defaultlang] == undefined) {
+			this._data[this._defaultlang] = original;
+		}
+	}
+}
+
 var Infoboard = {
-	init: function (container, data, isshowbusinfo) {
+	init: function (container, data, isshowbusinfo, language) {
 		var _targettimecatcher = function (i) {
 			var str;
 			var property = me.data.timetable[me.tableindex].schedule[i].property;
@@ -43,12 +69,12 @@ var Infoboard = {
 					var countdown = new Date();
 					countdown.setTime(targettime.getTime() - currenttime.getTime());
 					if (currenttime.getTime() > targettime.getTime())
-						return [i, '正在驶来', '预计'+targettime_withdelay.Format('hh:mm')+'到达', estimate_delay, 10000]; //[currententry index, countdown, nexttime, estimate-delay in min, countdown in min]
-					else         //  ↑targettime.Format_('mm:ss')+'对向发车'                                        ↑ not show is better...? cuz it's just an estimate..
+						return [i, me.dic.fetch(me.language)._commingsoon, me.dic.fetch(me.language)._nminutesleft_prefix+targettime_withdelay.Format('hh:mm')+me.dic.fetch(me.language)._nminutesleft_postfix, estimate_delay, 10000]; //[currententry index, countdown, nexttime, estimate-delay in min, countdown in min]
+					else         //                     ↑ [正在驶来] targettime.Format_('mm:ss')+'对向发车'                                        ↑ [10000] not show is better...? cuz it's just an estimate..
 						return [i, countdown, targettime.Format('hh:mm'), estimate_delay, countdown.getTime()/60/1000];
 				}
 			}
-			return [i, '已停运', '已停运', undefined, undefined];
+			return [i, me.dic.fetch(me.language)._outage, me.dic.fetch(me.language)._outage, undefined, undefined];
 		}
 		var _stringformatter = function (str) { // return [string to show, extrafield for currententry index, minutes left for the accurate next bus]
 			var extrafield = undefined; // prepared for _countdown and _nexttime, transfer current index
@@ -109,33 +135,79 @@ var Infoboard = {
 			}
 			return -1;
 		}
+
 		var me = {};
 		me.container = container; // div box
 		me.expand = false;
-		me.tag = '_' + container.attr('id'); 
-		me.data = eval(data); // convert to JSON
+		me.tag = '_' + container.attr('id');
+		me.data_static = null;
+		me.data = data; // convert to JSON
 		if (me.data['version'] > GLOBALVARS['version']){
 			console.log('*** New version of bus.js is needed. ***')
 			return undefined;
 		}
 
+		me.switchlanguage = function (dst_lang) { // dst_lang must be lowercase
+			// Map Language File of bus.js
+			if (dst_lang === undefined) // translate() may return undefined if no language section is in the json file
+				return;
+			if (dst_lang !== me.language) { // check if a full-text match exists
+				for (var key in me.dic.data) {
+					key = key.toLowerCase();
+					if (key === dst_lang) {
+						me.language = key;
+						break;
+					}
+				}
+			}
+			if (dst_lang != me.language) { // check if a language-based match exists   [lang]-[area] ---> zh-CN
+				for (var key in me.dic) {
+					if (key.slice(0, 2).toLowerCase() === dst_lang.slice(0, 2)) {
+						me.language = key.toLowerCase();
+						break;
+					}
+				}
+			}
+		}
+
+		var default_dic = 
+		{
+			"zh-cn": {
+				"_commingsoon": "正在驶来",
+				"_nminutesleft_prefix": "预计",
+				"_nminutesleft_postfix": "到达",
+				"_outage": "今日运营结束",
+				"_category": "班车类型：",
+				"_route": "行驶路线：",
+				"_lastupdate": "最后更新时间：",
+				"_businfo": "班车信息"
+			}
+		};
+		me.language = language?language.toLowerCase():'zh-cn'; 
+		me.dic = new Dictionary(default_dic, me.language); // default language of bus.js
+
+		me.data = preprocess(me.data); // convert abbr JSON to standard JSON
+		me.data_static = JSON.parse(JSON.stringify(me.data)); // deep copy for backup and future translation
+
+		var expect_internal_language = translate(me.data, language); // translate texts in JSON, in-place ASSERT
 		$.ajax({
 			url: './language.json',
-			success: function(json) {
-				me.dic = JSON.parse(json);
-			}, //TODO: if failed
+			success: function (json) {
+				me.dic.data = JSON.parse(json);
+				me.switchlanguage(expect_internal_language);
+				me.update(2);
+				me.update(0);
+			},
 			dataType: "text",
 			cache: true
 		});
-		me.language = 'zh-cn'; // default language of bus.js
 
-		me.data = preprocess(me.data); // convert abbr JSON to standard JSON
 		me.tableindex = _tableselector(); // timetable index for today
 		me.instant_buffer = []; // buffer of indicators
 		me.daily_buffer = [];
 		me.currententry = _timeshower(0)[0]; // index for highlight
-		me.update = function (mode) {
-			if (mode == 1) {
+		me.update = function (mode) { // ones digit - 0=dailyupdate, 1=instantupdate, 2=staticdataupdate; twos digit - 0=nothing, 1=settimer when onesdigit is 0
+			if (mode % 10 == 1) {
 				me.container.children('div.Top-container').children('div.Progress-indicator').removeClass('warning-indicator');
 				me.container.children('div.Top-container').children('div.Progress-indicator').removeClass('notice-indicator');
 				for (var i = me.instant_buffer.length - 1; i >= 0; i--) {
@@ -158,7 +230,7 @@ var Infoboard = {
 						me.currententry = result[1];
 					}
 				}
-			} else if (mode == 0) {
+			} else if (mode % 10 == 0) {
 				for (var i = me.daily_buffer.length - 1; i >= 0; i--) {
 					var result = _stringformatter(me.daily_buffer.eq(i).attr('formatter'));
 					me.daily_buffer.eq(i).text(result[0]);
@@ -179,87 +251,95 @@ var Infoboard = {
 					me.container.find('div#tabview'+me.tableindex+me.tag).find('div#i'+i).addClass('lowlight');
 				}
 				me.container.find('div#tabview'+me.tableindex+me.tag).find('div#i'+me.currententry).addClass('highlight');
-				var now = new Date();
-				window.setTimeout(function(){global_update(0)},(86400 - (now.getHours()*3600+now.getMinutes()*60+now.getSeconds()))*1000);
+				if (parseInt(mode / 10) % 10 == 1) {
+					var now = new Date();
+					window.setTimeout(function(){global_update(10)},(86400 - (now.getHours()*3600+now.getMinutes()*60+now.getSeconds()))*1000);
+				}
+			} else if (mode % 10 == 2) { // Fill in static contents
+				var tablist = $('<ul class="nav nav-tabs" role="tablist"></ul>');
+				var tabcontent = $('<div class="tab-content"></div>');
+				for (var i = 0; i < me.data.timetable.length; i++) {
+					var tabhref = 'tabview' + i;
+					var tabname = me.data.timetable[i].title;
+					var tab = $('<li role="presentation"><a href="#'+tabhref+me.tag+'" aria-controls="'+tabhref+me.tag+'" role="tab" data-toggle="tab">'+tabname+'</a></li>');
+					tablist.append(tab);
+
+					var tabpanel = $('<div role="tabpanel" class="tab-pane"></div>').attr('id', tabhref+me.tag);
+					var whiteshadowbox = $('<div class="box-inner-shadow"></div>');
+					var entriescontainer = $('<div class="Entries-container"></div>');
+					for (var j = 0; j < me.data.timetable[i].schedule.length; j++) {
+						var entry = $('<div class="Entry"></div>').attr('id', 'i'+j);
+							var entrycenter = $('<div class="Entry-center"></div>');
+						var entrytime = $('<div class="Entry-time"></div>');
+						entrytime.text(me.data.timetable[i].schedule[j].time);
+						entrycenter.append(entrytime);
+						if (me.data.timetable[i].schedule[j].text != undefined){
+							var entrytext = $('<div class="Entry-text"></div>');
+							entrytext.text(me.data.timetable[i].schedule[j].text);
+							entrycenter.append(entrytext);
+						}
+						entry.append(entrycenter);
+						entriescontainer.append(entry);
+					}
+					// tabpanel.append(whiteshadowbox);
+					tabpanel.append(entriescontainer);
+					tabcontent.append(tabpanel);
+				}
+				if (isshowbusinfo) {
+					var tab = $('<li role="presentation"><a href="#businfo'+me.tag+'" aria-controls="businfo'+me.tag+'" role="tab" data-toggle="tab">'+me.dic.fetch(me.language)._businfo+'</a></li>');
+					var tabpanel = $('<div role="tabpanel" class="tab-pane"></div>').attr('id', 'businfo'+me.tag);
+					var entriescontainer = $('<div class="Entries-container"></div>');
+					var listgroup = $('<ul class="list-group padding"></ul>');
+
+					listgroup.append($('<li class="list-group-item"></li>').text(me.dic.fetch(me.language)._category + me.data.name));
+					listgroup.append($('<li class="list-group-item"></li>').text(me.dic.fetch(me.language)._route + me.data.route.join(" => ")));
+					listgroup.append($('<li class="list-group-item"></li>').text(me.dic.fetch(me.language)._lastupdate + me.data.lastupdate));
+
+					entriescontainer.append(listgroup)
+					tablist.prepend(tab);
+					tabpanel.append(entriescontainer);
+					tabcontent.prepend(tabpanel);
+
+				}
+				me.container.children('div.Bottom-container').empty();
+				me.container.children('div.Bottom-container').append(tablist).append(tabcontent);
 			}
 		}
 
-		// Fill in static contents
 		me.instant_buffer = me.container.children('div.Top-container').children('div[formatter*="{_"]'); // formatter contains '{_'
 		me.daily_buffer = me.container.children('div.Top-container').children().not('div[formatter*="{_"]');
 
-		var tablist = $('<ul class="nav nav-tabs" role="tablist"></ul>');
-		var tabcontent = $('<div class="tab-content"></div>');
-		for (var i = 0; i < me.data.timetable.length; i++) {
-			var tabhref = 'tabview' + i;
-			var tabname = me.data.timetable[i].title;
-			var tab = $('<li role="presentation"><a href="#'+tabhref+me.tag+'" aria-controls="'+tabhref+me.tag+'" role="tab" data-toggle="tab">'+tabname+'</a></li>');
-			tablist.append(tab);
-
-			var tabpanel = $('<div role="tabpanel" class="tab-pane"></div>').attr('id', tabhref+me.tag);
-			var whiteshadowbox = $('<div class="box-inner-shadow"></div>');
-			var entriescontainer = $('<div class="Entries-container"></div>');
-			for (var j = 0; j < me.data.timetable[i].schedule.length; j++) {
-				var entry = $('<div class="Entry"></div>').attr('id', 'i'+j);
-					var entrycenter = $('<div class="Entry-center"></div>');
-				var entrytime = $('<div class="Entry-time"></div>');
-				entrytime.text(me.data.timetable[i].schedule[j].time);
-				entrycenter.append(entrytime);
-				if (me.data.timetable[i].schedule[j].text != undefined){
-					var entrytext = $('<div class="Entry-text"></div>');
-					entrytext.text(me.data.timetable[i].schedule[j].text);
-					entrycenter.append(entrytext);
-				}
-				entry.append(entrycenter);
-				entriescontainer.append(entry);
-			}
-			// tabpanel.append(whiteshadowbox);
-			tabpanel.append(entriescontainer);
-			tabcontent.append(tabpanel);
-		}
-		if (isshowbusinfo) {
-			var tab = $('<li role="presentation"><a href="#businfo'+me.tag+'" aria-controls="businfo'+me.tag+'" role="tab" data-toggle="tab">'+"班车信息"+'</a></li>');
-			var tabpanel = $('<div role="tabpanel" class="tab-pane"></div>').attr('id', 'businfo'+me.tag);
-			var entriescontainer = $('<div class="Entries-container"></div>');
-			var listgroup = $('<ul class="list-group padding"></ul>');
-
-			listgroup.append($('<li class="list-group-item"></li>').text("班车类别：" + me.data.name));
-			listgroup.append($('<li class="list-group-item"></li>').text("行驶路线：" + me.data.route.join(" => ")));
-			listgroup.append($('<li class="list-group-item"></li>').text("最后更新时间：" + me.data.lastupdate));
-
-			entriescontainer.append(listgroup)
-			tablist.prepend(tab);
-			tabpanel.append(entriescontainer);
-			tabcontent.prepend(tabpanel);
-
-		}
-		me.container.children('div.Bottom-container').append(tablist).append(tabcontent);
-
-		me.update(0);
-		me.update(1);
+		me.update( 2); // static
+		me.update(10); // daily
+		me.update( 1); // instant
 		GLOBALVARS['all_ifbds'].push(me);
 		return me;
 	}
 }
 
-function translate(json, dst_lang) {
+function translate(json, dst_lang) { // return the final selected language
 	if (!json.hasOwnProperty('language')) {
-		return;
+		return dst_lang;
 	}
 	var src_lang = json.language.default.toLowerCase();
 	dst_lang = dst_lang?dst_lang.toLowerCase():'auto';
+
+	if (src_lang === dst_lang) // don't need translation
+		return dst_lang;
 
 	var avail_lang_list = new Array();
 	for (var i = 0; i < json.language.list.length; i++) {
 		avail_lang_list.push(json.language.list[i].name.toLowerCase());
 	}
-	var nav_lang_list = navigator.languages;
+	avail_lang_list.push(src_lang); // default language
+
+	var nav_lang_list = navigator.languages.map(function(m){return m.toLowerCase();});
 
 // Choose Language
 	var final_dst_lang_index = -1;
 	if (dst_lang != 'auto') { // a target language is set
 		for (var i = 0; i < avail_lang_list.length; i++) { // full-text match
-			if (avail_lang_list[i] == dst_lang) // zh-CN ---> zh-CN
+			if (avail_lang_list[i] === dst_lang) // zh-CN ---> zh-CN
 				final_dst_lang_index = i;
 			else
 				continue;
@@ -267,9 +347,9 @@ function translate(json, dst_lang) {
 		}
 		if (final_dst_lang_index == -1) {
 			for (var i = 0; i < avail_lang_list.length; i++) { // language-based match
-				if (avail_lang_list[i].indexOf(dst_lang) != -1) // en-US ---> en
+				if (avail_lang_list[i].indexOf(dst_lang) !== -1) // en-US ---> en
 					final_dst_lang_index = i;
-				else if (avail_lang_list[i].slice(0, 2) == dst_lang.slice(0, 2)) // zh-CN ---> zh-HK
+				else if (avail_lang_list[i].slice(0, 2) === dst_lang.slice(0, 2)) // zh-CN ---> zh-HK
 					final_dst_lang_index = i;
 				else
 					continue;
@@ -279,13 +359,13 @@ function translate(json, dst_lang) {
 	} else { // no target language is set, read navigater.languages and manually match them
 		for (var i = 0; i < nav_lang_list.length; i++) { // full-text match
 			final_dst_lang_index = avail_lang_list.indexOf(nav_lang_list[i]);
-			if (final_dst_lang_index != -1)
+			if (final_dst_lang_index !== -1)
 				break;
 		}
-		if (final_dst_lang_index == -1) { // language-based match
+		if (final_dst_lang_index === -1) { // language-based match
 			for (var i = 0; i < nav_lang_list.length; i++) {
 				for (var j = avail_lang_list.length - 1; j >= 0; j--) {
-					if (avail_lang_list[j].slice(0, 2) == nav_lang_list[i].slice(0, 2)) {
+					if (avail_lang_list[j].slice(0, 2) === nav_lang_list[i].slice(0, 2)) {
 						final_dst_lang_index = j;
 						break;
 					}
@@ -295,63 +375,48 @@ function translate(json, dst_lang) {
 			}
 		}
 	}
-	if (final_dst_lang_index == -1) { // still no match, use navigator.browserLanguage or navigator.language
-		dst_lang = navigator.browserLanguage?navigator.browserLanguage:navigator.language;
-		final_dst_lang_index = avail_lang_list.indexOf(nav_lang_list[i])
+	if (final_dst_lang_index === -1) { // still no match, use navigator.browserLanguage or navigator.language
+		dst_lang = navigator.browserLanguage?navigator.browserLanguage.toLowerCase():navigator.language.toLowerCase();
+		final_dst_lang_index = avail_lang_list.indexOf(dst_lang);
 	}
-	if (final_dst_lang_index == -1) // unable to detect a target language, use default language
-		return json;
-	dst_lang = json.language.list[final_dst_lang_index].name.toLowerCase();
 
-	if (src_lang == dst_lang) // don't need translation
-		return json;
+	if (final_dst_lang_index === -1) // unable to decide a target language, use default language
+		return src_lang;
+
+	if (final_dst_lang_index === avail_lang_list.length - 1) // final one is default language, don't need translation
+		return dst_lang;
+	else
+		dst_lang = json.language.list[final_dst_lang_index].name.toLowerCase();
+
+	if (src_lang === dst_lang) // don't need translation
+		return dst_lang;
 
 // Fetch Language
-	var dictionary;
 	$.ajax({
 		url: json.language.list[final_dst_lang_index].url,
-		success: function(json) {
-			dictionary = JSON.parse(json);
-		}, //TODO: if failed
+		success: function (json_ajax) {
+			var dictionary = JSON.parse(json_ajax);
+		// Translation
+			var inner_translate = function (json) {
+					for (var prop in json) {
+						if (prop === 'filter' || prop === 'property' || prop === 'language' || prop === 'time')
+							continue;
+						if (typeof json[prop] === 'string')
+							json[prop] = dictionary[json[prop]]?dictionary[json[prop]]:json[prop];
+						else if (typeof json[prop] === 'object')
+							for (var element in json[prop])
+								inner_translate(json[prop]);
+						else // number, boolean, undefined, function
+							continue;
+					}
+				};
+			inner_translate(json); // Need test
+			// TODO: invoke UI update
+		},
 		dataType: "text",
 		cache: true
 	});
-
-// Map Language File of bus.js
-	if (dst_lang != me.language) { // check if a full-text match exists
-		for (var key in me.dic) {
-			if (key.toLowerCase() == dst_lang) {
-				me.language = key;
-				break;
-			}
-		}
-	}
-	if (dst_lang != me.language) { // check if a language-based match exists   [lang]-[area] ---> zh-CN
-		for (var key in me.dic) {
-			if (key.slice(0, 2).toLowerCase() == dst_lang.slice(0, 2)) {
-				me.language = key;
-				break;
-			}
-		}
-	}
-
-// Translation
-	var inner_translate = function (json) {
-			for (var prop in json) {
-				if (prop == 'filter')
-					continue;
-				if (prop == 'property')
-					continue;
-				if (typeof json[prop] == 'string')
-					json[prop] = dictionary[json[prop]]?dictionary[json[prop]]:json[prop];
-				else if (typeof json[prop] == 'object')
-					for (var element in json[prop])
-						inner_translate(json[prop]);
-				else // number, boolean, undefined, function
-					continue;
-		};
-	inner_translate(json);
-	return json;
+	return dst_lang;
 }
 
 function preprocess(json) {
