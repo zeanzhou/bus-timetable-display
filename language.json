@@ -1,0 +1,22 @@
+{
+	"zh-cn": {
+		"_commingsoon": "正在驶来",
+		"_nminutesleft_prefix": "预计",
+		"_nminutesleft_postfix": "到达",
+		"_outage": "今日运营结束",
+		"_category": "班车类型：",
+		"_route": "行驶路线：",
+		"_lastupdate": "最后更新时间：",
+		"_businfo": "班车信息"
+	},
+	"en-us": {
+		"_commingsoon": "Comming",
+		"_nminutesleft_prefix": "Expected to arrive in ",
+		"_nminutesleft_postfix": "",
+		"_outage": "No Service Now",
+		"_category": "Category: ",
+		"_route": "Route: ",
+		"_lastupdate": "Last Updated: ",
+		"_businfo": "Info"
+	}
+}

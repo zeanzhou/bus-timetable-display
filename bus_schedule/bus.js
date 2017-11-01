@@ -34,6 +34,29 @@ class Dictionary {
 	}
 }
 
+// Load language file
+var _language_json =
+ 		{
+			"zh-cn": {
+				"_commingsoon": "正在驶来",
+				"_nminutesleft_prefix": "预计",
+				"_nminutesleft_postfix": "到达",
+				"_outage": "今日运营结束",
+				"_category": "班车类型：",
+				"_route": "行驶路线：",
+				"_lastupdate": "最后更新时间：",
+				"_businfo": "班车信息"
+			}
+		};
+$.ajax({
+	url: './language.json',
+	success: function (json) {
+		_language_json = JSON.parse(json);
+	},
+	dataType: "text",
+	cache: true
+});
+
 var Infoboard = {
 	init: function (container, data, isshowbusinfo, language) {
 		var _targettimecatcher = function (i) {
@@ -135,19 +158,7 @@ var Infoboard = {
 			}
 			return -1;
 		}
-
-		var me = {};
-		me.container = container; // div box
-		me.expand = false;
-		me.tag = '_' + container.attr('id');
-		me.data_static = null;
-		me.data = data; // convert to JSON
-		if (me.data['version'] > GLOBALVARS['version']){
-			console.log('*** New version of bus.js is needed. ***')
-			return undefined;
-		}
-
-		me.switchlanguage = function (dst_lang) { // dst_lang must be lowercase
+		var _switchlanguage = function (dst_lang) { // dst_lang must be lowercase
 			// Map Language File of bus.js
 			if (dst_lang === undefined) // translate() may return undefined if no language section is in the json file
 				return;
@@ -170,37 +181,135 @@ var Infoboard = {
 			}
 		}
 
-		var default_dic = 
-		{
-			"zh-cn": {
-				"_commingsoon": "正在驶来",
-				"_nminutesleft_prefix": "预计",
-				"_nminutesleft_postfix": "到达",
-				"_outage": "今日运营结束",
-				"_category": "班车类型：",
-				"_route": "行驶路线：",
-				"_lastupdate": "最后更新时间：",
-				"_businfo": "班车信息"
-			}
-		};
+		var me = {};
+		me.container = container; // div box
+		me.expand = false;
+		me.tag = '_' + container.attr('id');
+		me.data_static = null;
+		me.data = data; // convert to JSON
+		if (me.data['version'] > GLOBALVARS['version']){
+			console.log('*** New version of bus.js is needed. ***')
+			return undefined;
+		}
+
 		me.language = language?language.toLowerCase():'zh-cn'; 
-		me.dic = new Dictionary(default_dic, me.language); // default language of bus.js
+		me.dic = new Dictionary(_language_json, me.language); // default language of bus.js
 
-		me.data = preprocess(me.data); // convert abbr JSON to standard JSON
 		me.data_static = JSON.parse(JSON.stringify(me.data)); // deep copy for backup and future translation
+		me.data = preprocess(me.data); // convert abbr JSON to standard JSON
 
-		var expect_internal_language = translate(me.data, language); // translate texts in JSON, in-place ASSERT
-		$.ajax({
-			url: './language.json',
-			success: function (json) {
-				me.dic.data = JSON.parse(json);
-				me.switchlanguage(expect_internal_language);
-				me.update(2);
-				me.update(0);
-			},
-			dataType: "text",
-			cache: true
-		});
+		me.select_lang = function (dst_lang) { // return the final selected language
+			var json = me.data_static; // make a shallow copy first
+			if (!json.hasOwnProperty('language')) {
+				return dst_lang;
+			}
+			var src_lang = json.language.default.toLowerCase();
+			dst_lang = dst_lang?dst_lang.toLowerCase():'auto';
+
+			if (src_lang === dst_lang) // don't need translation
+				return dst_lang;
+
+			var avail_lang_list = new Array();
+			for (var i = 0; i < json.language.list.length; i++) {
+				avail_lang_list.push(json.language.list[i].name.toLowerCase());
+			}
+			avail_lang_list.push(src_lang); // default language
+
+			var nav_lang_list = navigator.languages.map(function(m){return m.toLowerCase();});
+
+		// Choose Language
+			var final_dst_lang_index = -1;
+			if (dst_lang != 'auto') { // a target language is set
+				for (var i = 0; i < avail_lang_list.length; i++) { // full-text match
+					if (avail_lang_list[i] === dst_lang) // zh-CN ---> zh-CN
+						final_dst_lang_index = i;
+					else
+						continue;
+					break;
+				}
+				if (final_dst_lang_index == -1) {
+					for (var i = 0; i < avail_lang_list.length; i++) { // language-based match
+						if (avail_lang_list[i].indexOf(dst_lang) !== -1) // en-US ---> en
+							final_dst_lang_index = i;
+						else if (avail_lang_list[i].slice(0, 2) === dst_lang.slice(0, 2)) // zh-CN ---> zh-HK
+							final_dst_lang_index = i;
+						else
+							continue;
+						break;
+					}
+				}
+			} else { // no target language is set, read navigater.languages and manually match them
+				for (var i = 0; i < nav_lang_list.length; i++) { // full-text match
+					final_dst_lang_index = avail_lang_list.indexOf(nav_lang_list[i]);
+					if (final_dst_lang_index !== -1)
+						break;
+				}
+				if (final_dst_lang_index === -1) { // language-based match
+					for (var i = 0; i < nav_lang_list.length; i++) {
+						for (var j = avail_lang_list.length - 1; j >= 0; j--) {
+							if (avail_lang_list[j].slice(0, 2) === nav_lang_list[i].slice(0, 2)) {
+								final_dst_lang_index = j;
+								break;
+							}
+						}
+						if (final_dst_lang_index != -1)
+							break;
+					}
+				}
+			}
+			if (final_dst_lang_index === -1) { // still no match, use navigator.browserLanguage or navigator.language
+				dst_lang = navigator.browserLanguage?navigator.browserLanguage.toLowerCase():navigator.language.toLowerCase();
+				final_dst_lang_index = avail_lang_list.indexOf(dst_lang);
+			}
+
+			if (final_dst_lang_index === -1) // unable to decide a target language, use default language
+				return src_lang;
+
+			if (final_dst_lang_index === avail_lang_list.length - 1) // final one is default language, don't need translation
+				return dst_lang;
+			else
+				dst_lang = json.language.list[final_dst_lang_index].name.toLowerCase();
+
+			if (src_lang === dst_lang) // don't need translation
+				return dst_lang;
+
+		// Fetch Language
+			$.ajax({
+				url: json.language.list[final_dst_lang_index].url,
+				success: function (json_ajax) {
+					var dictionary = JSON.parse(json_ajax);
+				// Translation
+					var inner_translate = function (json) {
+							for (var prop in json) {
+								if (prop === 'filter' || prop === 'property' || prop === 'language' || prop === 'time')
+									continue;
+								if (typeof json[prop] === 'string')
+									json[prop] = dictionary[json[prop]]?dictionary[json[prop]]:json[prop];
+								else if (typeof json[prop] === 'object')
+									for (var element in json[prop])
+										inner_translate(json[prop]);
+								else // number, boolean, undefined, function
+									continue;
+							}
+						};
+
+					json = JSON.parse(JSON.stringify(me.data_static)); // make a deep, copy, make on copy first
+					preprocess(json);
+					inner_translate(json);
+
+					me.data = json; // replace real data with this translated copy
+
+					// UI Update
+					_switchlanguage(dst_lang);
+					me.update(2); // static
+					me.update(0); // daily
+				},
+				dataType: "text",
+				cache: true
+			});
+			return dst_lang;
+		};
+		me.select_lang(language);
 
 		me.tableindex = _tableselector(); // timetable index for today
 		me.instant_buffer = []; // buffer of indicators
@@ -299,12 +408,11 @@ var Infoboard = {
 					tablist.prepend(tab);
 					tabpanel.append(entriescontainer);
 					tabcontent.prepend(tabpanel);
-
 				}
 				me.container.children('div.Bottom-container').empty();
 				me.container.children('div.Bottom-container').append(tablist).append(tabcontent);
 			}
-		}
+		};
 
 		me.instant_buffer = me.container.children('div.Top-container').children('div[formatter*="{_"]'); // formatter contains '{_'
 		me.daily_buffer = me.container.children('div.Top-container').children().not('div[formatter*="{_"]');
@@ -315,108 +423,6 @@ var Infoboard = {
 		GLOBALVARS['all_ifbds'].push(me);
 		return me;
 	}
-}
-
-function translate(json, dst_lang) { // return the final selected language
-	if (!json.hasOwnProperty('language')) {
-		return dst_lang;
-	}
-	var src_lang = json.language.default.toLowerCase();
-	dst_lang = dst_lang?dst_lang.toLowerCase():'auto';
-
-	if (src_lang === dst_lang) // don't need translation
-		return dst_lang;
-
-	var avail_lang_list = new Array();
-	for (var i = 0; i < json.language.list.length; i++) {
-		avail_lang_list.push(json.language.list[i].name.toLowerCase());
-	}
-	avail_lang_list.push(src_lang); // default language
-
-	var nav_lang_list = navigator.languages.map(function(m){return m.toLowerCase();});
-
-// Choose Language
-	var final_dst_lang_index = -1;
-	if (dst_lang != 'auto') { // a target language is set
-		for (var i = 0; i < avail_lang_list.length; i++) { // full-text match
-			if (avail_lang_list[i] === dst_lang) // zh-CN ---> zh-CN
-				final_dst_lang_index = i;
-			else
-				continue;
-			break;
-		}
-		if (final_dst_lang_index == -1) {
-			for (var i = 0; i < avail_lang_list.length; i++) { // language-based match
-				if (avail_lang_list[i].indexOf(dst_lang) !== -1) // en-US ---> en
-					final_dst_lang_index = i;
-				else if (avail_lang_list[i].slice(0, 2) === dst_lang.slice(0, 2)) // zh-CN ---> zh-HK
-					final_dst_lang_index = i;
-				else
-					continue;
-				break;
-			}
-		}
-	} else { // no target language is set, read navigater.languages and manually match them
-		for (var i = 0; i < nav_lang_list.length; i++) { // full-text match
-			final_dst_lang_index = avail_lang_list.indexOf(nav_lang_list[i]);
-			if (final_dst_lang_index !== -1)
-				break;
-		}
-		if (final_dst_lang_index === -1) { // language-based match
-			for (var i = 0; i < nav_lang_list.length; i++) {
-				for (var j = avail_lang_list.length - 1; j >= 0; j--) {
-					if (avail_lang_list[j].slice(0, 2) === nav_lang_list[i].slice(0, 2)) {
-						final_dst_lang_index = j;
-						break;
-					}
-				}
-				if (final_dst_lang_index != -1)
-					break;
-			}
-		}
-	}
-	if (final_dst_lang_index === -1) { // still no match, use navigator.browserLanguage or navigator.language
-		dst_lang = navigator.browserLanguage?navigator.browserLanguage.toLowerCase():navigator.language.toLowerCase();
-		final_dst_lang_index = avail_lang_list.indexOf(dst_lang);
-	}
-
-	if (final_dst_lang_index === -1) // unable to decide a target language, use default language
-		return src_lang;
-
-	if (final_dst_lang_index === avail_lang_list.length - 1) // final one is default language, don't need translation
-		return dst_lang;
-	else
-		dst_lang = json.language.list[final_dst_lang_index].name.toLowerCase();
-
-	if (src_lang === dst_lang) // don't need translation
-		return dst_lang;
-
-// Fetch Language
-	$.ajax({
-		url: json.language.list[final_dst_lang_index].url,
-		success: function (json_ajax) {
-			var dictionary = JSON.parse(json_ajax);
-		// Translation
-			var inner_translate = function (json) {
-					for (var prop in json) {
-						if (prop === 'filter' || prop === 'property' || prop === 'language' || prop === 'time')
-							continue;
-						if (typeof json[prop] === 'string')
-							json[prop] = dictionary[json[prop]]?dictionary[json[prop]]:json[prop];
-						else if (typeof json[prop] === 'object')
-							for (var element in json[prop])
-								inner_translate(json[prop]);
-						else // number, boolean, undefined, function
-							continue;
-					}
-				};
-			inner_translate(json); // Need test
-			// TODO: invoke UI update
-		},
-		dataType: "text",
-		cache: true
-	});
-	return dst_lang;
 }
 
 function preprocess(json) {

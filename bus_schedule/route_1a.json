@@ -6,7 +6,16 @@
 	"destination": "学校",
 	"notice": "-",
 	"route": ["张江地铁站2号口（大桥六线站南侧）", "海科路科苑路","海科路99号","环科路199号"],
-	"lastupdate": "2017年7月22日 22:10:57",
+	"lastupdate": "2017-10-22 00:42:33",
+	"language": {
+		"default": "zh-cn",
+		"list": [
+			{
+				"name": "en-us",
+				"url": "./bus_schedule/en.json"
+			}
+		]
+	},
 	"timetable": [
 		{
 			"title": "暑假",
@@ -20,81 +29,6 @@
 					"time": "0:00",
 					"property": "accurate",
 					"text": "2017/7/29~2017/8/18班车停运"
-				}
-			]
-		},
-		{
-			"title": "7/24-7/28",
-			"filter": ["2017/7/24", "2017/7/25", "2017/7/26", "2017/7/27", "2017/7/28"],
-			"priority": 5,
-			"estimate-delay": 20, 
-			"text": ["于该时刻从环科路发车，随到即开，预计20分钟"],
-			"schedule": [
-				"7:30",
-				"7:40",
-				"7:50",
-				"8:10",
-				"8:20",
-				"8:35",
-				"8:45",
-				"8:55",
-				"9:20",
-				"10:25",
-				"11:25",
-				"12:45",
-				"13:45",
-				"14:45",
-				"15:45",
-				"16:45",
-				{
-					"time": "17:00",
-					"property": "estimate",
-					"text": 0
-				},
-				{
-					"time": "17:15",
-					"property": "estimate",
-					"text": 0
-				},
-				{
-					"time": "17:30",
-					"property": "estimate",
-					"text": 0
-				},
-				{
-					"time": "17:45",
-					"property": "estimate",
-					"text": 0
-				},
-				{
-					"time": "18:00",
-					"property": "estimate",
-					"text": 0
-				},
-				{
-					"time": "18:30",
-					"property": "estimate",
-					"text": 0
-				},
-				{
-					"time": "18:45",
-					"property": "estimate",
-					"text": 0
-				},
-				{
-					"time": "19:00",
-					"property": "estimate",
-					"text": 0
-				},
-				{
-					"time": "19:30",
-					"property": "estimate",
-					"text": 0
-				},
-				{
-					"time": "19:40",
-					"property": "estimate",
-					"text": 0
 				}
 			]
 		},
