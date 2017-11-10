@@ -14,7 +14,16 @@
           "海科路科苑路",
           "海科路金科路",
           "环科路金科路"],
-	"lastupdate": "2017年1月1日17:41:50",
+	"lastupdate": "2017-11-10 21:13:33",
+	"language": {
+		"default": "zh-cn",
+		"list": [
+			{
+				"name": "en-us",
+				"url": "./bus_schedule/en.json"
+			}
+		]
+	},
 	"timetable": [
 		{
 			"title": "工作日",
