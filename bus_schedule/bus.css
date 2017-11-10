@@ -37,7 +37,7 @@ div.Top-container{
 	position: relative;
 	top: 0;
 
-	height: 100px;
+	height: 95px;
 	width: 100%;
 
 	text-shadow: 2px 2px 1px #eee;
@@ -167,4 +167,26 @@ div.warning-indicator{
 }
 div.notice-indicator{
 	color: orange;
+}
+div.line-dragger{
+	height: 1px;
+	color: #DADADA;
+	border-style: solid;
+	border-width: 1px;
+	border-bottom: none;
+	position: relative;
+	box-shadow: 0px 0px 3px ;/*0.2px grey;*/
+	margin: 2px auto 2px auto;
+}
+div.width-short{
+	width: 50px;
+}
+div.width-medium{
+	width: 45px;
+}
+div.width-long{
+	width: 40px;
+}
+div.margin-bottom-small{
+	margin-bottom: 6px;
 }

@@ -33,6 +33,7 @@
 	</ul>
 </div> -->
 
+
 <div class="Infoboard " id="bus1057_a">
 	<div class="Top-container">
 		<div class="Left-top-indicator" formatter="{abbr}"></div>
@@ -40,6 +41,9 @@
 		<div class="Center-indicator" formatter="{_countdown[auto]}"></div>
 		<div class="Bottom-indicator" formatter="{departure}=>{destination}"></div>
 	</div>
+	<div class="line-dragger width-short"></div>
+	<div class="line-dragger width-medium"></div>
+	<div class="line-dragger width-long"></div>
 	<div class="Bottom-container">
 	</div>
 </div>
@@ -51,6 +55,9 @@
 		<div class="Center-indicator" formatter="{_countdown[auto]}"></div>
 		<div class="Bottom-indicator" formatter="{departure}=>{destination}"></div>
 	</div>
+	<div class="line-dragger width-short"></div>
+	<div class="line-dragger width-medium"></div>
+	<div class="line-dragger width-long"></div>
 	<div class="Bottom-container">
 	</div>
 </div>
@@ -62,6 +69,9 @@
 		<div class="Center-indicator" formatter="{_countdown[auto]}"></div>
 		<div class="Bottom-indicator" formatter="{departure}=>{destination}"></div>
 	</div>
+	<div class="line-dragger width-short"></div>
+	<div class="line-dragger width-medium"></div>
+	<div class="line-dragger width-long"></div>
 	<div class="Bottom-container">
 	</div>
 </div>
@@ -73,6 +83,9 @@
 		<div class="Center-indicator" formatter="{_countdown[auto]}"></div>
 		<div class="Bottom-indicator" formatter="{departure}=>{destination}"></div>
 	</div>
+	<div class="line-dragger width-short"></div>
+	<div class="line-dragger width-medium"></div>
+	<div class="line-dragger width-long"></div>
 	<div class="Bottom-container">
 	</div>
 </div>
@@ -88,7 +101,7 @@
 				if (GLOBALVARS['all_ifbds'].length < 4) 
 					return;
 				lastClick = $(this);
-				var newheight = window.innerHeight-lastClick.children('div.Top-container').outerHeight()-lastClick.find('ul.nav').outerHeight()-18;
+				var newheight = window.innerHeight-lastClick.children('div.Top-container').outerHeight()-lastClick.find('ul.nav').outerHeight()-36;
 				lastClick.find('div.Entries-container').css('height', newheight);
 				// lastClick.parent().animate({scrollTop:$('#'+lastClick.attr('id')).offset().top-9});
 					var container = $(this).find('div[class="tab-pane active"]').children('div.Entries-container');
@@ -99,13 +112,21 @@
 						});
 			});
 			$('div.Top-container').click(function () {
-				$(this).next().fadeToggle();
+				// $(this).parent().children('div.Bottom-container').fadeToggle();
 				showall = !showall;
-				if (showall) 
+				var line_draggers = $(this).parent().children('div.line-dragger');
+				if (showall){
+					$(this).parent().children('div.Bottom-container').hide();
 					$('div.Infoboard').fadeIn();
+					$(this).parent().children('div.line-dragger').first().removeClass('width-long').addClass('width-short');
+					$(this).parent().children('div.line-dragger').last().removeClass('width-short').addClass('width-long').removeClass('margin-bottom-small');
+				}
 				else{
+					$(this).parent().children('div.Bottom-container').fadeIn();
 					$(this).parent().show();
 					$('div.Infoboard').not($(this).parent()).hide();
+					$(this).parent().children('div.line-dragger').first().removeClass('width-short').addClass('width-long');
+					$(this).parent().children('div.line-dragger').last().removeClass('width-long').addClass('width-short').addClass('margin-bottom-small');;
 				}
 			});
 			$(document).ready(function(){
