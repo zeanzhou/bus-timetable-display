@@ -116,14 +116,17 @@
 				showall = !showall;
 				var line_draggers = $(this).parent().children('div.line-dragger');
 				if (showall){
-					$(this).parent().children('div.Bottom-container').hide();
-					$('div.Infoboard').fadeIn();
-					$(this).parent().children('div.line-dragger').first().removeClass('width-long').addClass('width-short');
-					$(this).parent().children('div.line-dragger').last().removeClass('width-short').addClass('width-long').removeClass('margin-bottom-small');
+					$(this).parent().children('div.Bottom-container').fadeOut('normal', function () {
+						var thisobj = $(this);
+						$('div.Infoboard').show(0, function () {
+							thisobj.parent().children('div.line-dragger').first().removeClass('width-long').addClass('width-short');
+							thisobj.parent().children('div.line-dragger').last().removeClass('width-short').addClass('width-long').removeClass('margin-bottom-small');
+						});
+					});
 				}
 				else{
 					$(this).parent().children('div.Bottom-container').fadeIn();
-					$(this).parent().show();
+					// $(this).parent().show();
 					$('div.Infoboard').not($(this).parent()).hide();
 					$(this).parent().children('div.line-dragger').first().removeClass('width-short').addClass('width-long');
 					$(this).parent().children('div.line-dragger').last().removeClass('width-long').addClass('width-short').addClass('margin-bottom-small');;
