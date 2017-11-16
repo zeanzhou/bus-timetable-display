@@ -215,7 +215,7 @@ var Infoboard = {
 			}
 			avail_lang_list.push(src_lang); // default language
 
-			var nav_lang_list = navigator.languages.map(function(m){return m.toLowerCase();});
+			var nav_lang_list = navigator.languages?navigator.languages.map(function(m){return m.toLowerCase();}):[];
 
 		// Choose Language
 			var final_dst_lang_index = -1;
