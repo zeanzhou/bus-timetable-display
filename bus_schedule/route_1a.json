@@ -6,7 +6,7 @@
 	"destination": "学校",
 	"notice": "-",
 	"route": ["张江地铁站2号口（大桥六线站南侧）", "海科路科苑路（下车请提前告之师傅）","海科路99号","环科路199号"],
-	"lastupdate": "2018-1-15 05:24:53",
+	"lastupdate": "2018-1-15 05:42:37",
 	"language": {
 		"default": "zh-cn",
 		"list": [
@@ -105,12 +105,12 @@
 					"time": "17:00",
 					"property": "estimate",
 					"text": "于该时刻从环科路发车，随到即开，预计20分钟"
-				}
+				},
 				{
 					"time": "17:30",
 					"property": "estimate",
 					"text": "于该时刻从环科路发车，随到即开，预计20分钟"
-				}
+				},
 				{
 					"time": "19:30",
 					"property": "accurate",
