@@ -5,8 +5,8 @@
 	"departure": "张江高科站",
 	"destination": "学校",
 	"notice": "-",
-	"route": ["张江地铁站2号口（大桥六线站南侧）", "海科路科苑路","海科路99号","环科路199号"],
-	"lastupdate": "2017-10-22 00:42:33",
+	"route": ["张江地铁站2号口（大桥六线站南侧）", "海科路科苑路（下车请提前告之师傅）","海科路99号","环科路199号"],
+	"lastupdate": "2018-1-15 05:24:53",
 	"language": {
 		"default": "zh-cn",
 		"list": [
@@ -37,13 +37,29 @@
 			"filter": "weekday",
 			"priority": 0,
 			"estimate-delay": 20, 
-			"text": ["于该时刻从环科路发车，随到即开，预计20分钟"],
+			"text": ["于该时刻从环科路发车，随到即开，预计20分钟",
+					 "本班车途经上海光源与蛋白质中心"],
 			"schedule": [
 				"7:30",
 				"7:40",
-				"8:30",
+				"8:35",
+				{
+					"time": "9:00",
+					"property": "accurate",
+					"text": 1
+				},
 				"9:45",
+				{
+					"time": "10:15",
+					"property": "accurate",
+					"text": 1
+				},
 				"10:45",
+				{
+					"time": "11:00",
+					"property": "accurate",
+					"text": 1
+				},
 				"11:25",
 				"12:45",
 				"13:45",
@@ -70,7 +86,7 @@
 					"text": 0
 				},
 				{
-					"time": "19:45",
+					"time": "19:40",
 					"property": "estimate",
 					"text": 0
 				}
@@ -79,11 +95,22 @@
 		{
 			"title": "节假日",
 			"filter": "holiday",
+			"estimate-delay": 20, 
 			"priority": 1,
 			"schedule": [
 				"8:30",
 				"9:30",
 				"11:15",
+				{
+					"time": "17:00",
+					"property": "estimate",
+					"text": "于该时刻从环科路发车，随到即开，预计20分钟"
+				}
+				{
+					"time": "17:30",
+					"property": "estimate",
+					"text": "于该时刻从环科路发车，随到即开，预计20分钟"
+				}
 				{
 					"time": "19:30",
 					"property": "accurate",
